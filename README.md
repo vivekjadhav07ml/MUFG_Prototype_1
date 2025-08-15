@@ -1,3 +1,4 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/7ddbf255-7d8b-45b6-9b2e-ec1be8c30c34/deploy-status)](https://app.netlify.com/projects/superaiadvisor/deploys)
 # AI Investment Advisor for Superannuation
 
 A comprehensive financial advisory web application that provides AI-powered investment guidance for Australian superannuation users.
