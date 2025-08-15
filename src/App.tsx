@@ -8,6 +8,10 @@ import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/Auth/LoginPage';
 import { SignupPage } from './components/Auth/SignupPage';
 import { ForgotPasswordPage } from './components/Auth/ForgotPasswordPage';
+import { MarketTrends } from './components/MarketTrends';
+import { InvestmentManager } from './components/InvestmentManager';
+import { ForecastingTool } from './components/ForecastingTool';
+import { AIRecommendations } from './components/AIRecommendations';
 import ProfilePage from './components/ProfilePage';
 
 import { useAuth } from './hooks/useAuth';
@@ -40,7 +44,7 @@ export type UserProfile = {
 
 
 
-type View = 'landing' | 'onboarding' | 'dashboard' | 'chat' | 'education' | 'login' | 'signup' | 'forgot' | 'profile';
+type View = 'landing' | 'onboarding' | 'dashboard' | 'chat' | 'education' | 'login' | 'signup' | 'forgot' | 'profile' | 'market' | 'investments' | 'forecasting' | 'ai-recommendations';
 
 
 function App() {
@@ -138,8 +142,16 @@ function App() {
         return <ChatInterface userProfile={userProfile} />;
       case 'education':
         return <EducationCenter />;
+      case 'market':
+        return <MarketTrends userProfile={userProfile} />;
+      case 'investments':
+        return <InvestmentManager userProfile={userProfile} />;
+      case 'forecasting':
+        return <ForecastingTool userProfile={userProfile} />;
+      case 'ai-recommendations':
+        return <AIRecommendations userProfile={userProfile} />;
       case 'profile':
-        return <ProfilePage userProfile={userProfile} onEdit={() => alert('Edit coming soon!')} />;
+        return <ProfilePage userProfile={userProfile} />;
       default:
         return <Dashboard userProfile={userProfile} />;
     }
@@ -148,7 +160,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <Header 
-        currentView={currentView as Exclude<View, 'landing' | 'login' | 'signup' | 'forgot'>} 
+        currentView={currentView as Exclude<View, 'landing' | 'login' | 'signup' | 'forgot'>}
         setCurrentView={setCurrentView as any}
         userProfile={userProfile}
       />

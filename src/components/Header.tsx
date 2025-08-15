@@ -1,16 +1,20 @@
 import React from 'react';
-import { TrendingUp, MessageCircle, BookOpen, BarChart3 } from 'lucide-react';
+import { TrendingUp, MessageCircle, BookOpen, BarChart3, LineChart, Briefcase, Calculator, Bot } from 'lucide-react';
 import { UserProfile } from '../App';
 
 interface HeaderProps {
   currentView: string;
-  setCurrentView: (view: 'onboarding' | 'dashboard' | 'chat' | 'education' | 'profile') => void;
+  setCurrentView: (view: 'onboarding' | 'dashboard' | 'chat' | 'education' | 'profile' | 'market' | 'investments' | 'forecasting' | 'ai-recommendations') => void;
   userProfile: UserProfile | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, userProfile }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { id: 'investments', label: 'Investments', icon: Briefcase },
+    { id: 'market', label: 'Market', icon: LineChart },
+    { id: 'ai-recommendations', label: 'AI Advisor', icon: Bot },
+    { id: 'forecasting', label: 'Forecasting', icon: Calculator },
     { id: 'chat', label: 'AI Advisor', icon: MessageCircle },
     { id: 'education', label: 'Learn', icon: BookOpen },
   ];
@@ -30,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, use
           </div>
 
           {userProfile && (
-            <nav className="flex items-center space-x-8">
+            <nav className="hidden lg:flex items-center space-x-6">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentView === item.id;
@@ -39,14 +43,14 @@ export const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, use
                   <button
                     key={item.id}
                     onClick={() => setCurrentView(item.id as any)}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
+                    className={`flex items-center space-x-1 px-2 py-2 rounded-lg transition-all duration-200 text-sm ${
                       isActive
                         ? 'bg-blue-100 text-blue-700'
                         : 'text-slate-600 hover:text-blue-700 hover:bg-slate-50'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
+                    <Icon className="w-4 h-4" />
+                    <span className="font-medium hidden xl:inline">{item.label}</span>
                   </button>
                 );
               })}
