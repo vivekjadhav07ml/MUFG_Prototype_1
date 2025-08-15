@@ -4,35 +4,34 @@ import { UserProfile } from '../App';
 
 interface HeaderProps {
   currentView: string;
-  setCurrentView: (view: 'onboarding' | 'dashboard' | 'chat' | 'education' | 'profile' | 'market' | 'investments' | 'forecasting' | 'ai-recommendations') => void;
+  setCurrentView: (view: 'onboarding' | 'dashboard' | 'combined-ai' | 'education' | 'profile' | 'market' | 'investments' | 'forecasting') => void;
   userProfile: UserProfile | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, userProfile }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-    { id: 'investments', label: 'Investments', icon: Briefcase },
-    { id: 'market', label: 'Market', icon: LineChart },
-    { id: 'ai-recommendations', label: 'AI Advisor', icon: Bot },
-    { id: 'forecasting', label: 'Forecasting', icon: Calculator },
-    { id: 'chat', label: 'AI Advisor', icon: MessageCircle },
+    { id: 'combined-ai', label: 'AI Advisor', icon: Bot },
+    { id: 'investments', label: 'Portfolio', icon: Briefcase },
+    { id: 'market', label: 'Market', icon: LineChart },    
+    { id: 'forecasting', label: 'Forecasting', icon: Calculator },    
     { id: 'education', label: 'Learn', icon: BookOpen },
   ];
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-slate-200 z-50">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+    <header className="fixed top-0 left-0 right-0 w-screen bg-white/95 backdrop-blur-sm border-b border-slate-200 z-50">
+      <div className="w-full px-2 sm:px-4 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo & Title */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 cursor-pointer select-none" onClick={() => setCurrentView('dashboard')} title="Go to Home">
             <div className="p-2 bg-gradient-to-br from-blue-600 to-green-600 rounded-lg shadow-sm">
               <TrendingUp className="w-6 h-6 text-white" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">SuperAI Advisor</h1>
-              <p className="text-[10px] sm:text-xs text-slate-500 hidden sm:block">Your AI Investment Guide</p>
+              <span className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">SuperAI Advisor</span>
+              <span className="text-[10px] sm:text-xs text-slate-500 hidden sm:block">Your AI Investment Guide</span>
             </div>
           </div>
 

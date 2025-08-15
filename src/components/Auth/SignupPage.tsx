@@ -268,7 +268,7 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onBack, onSwitchToLogin 
                   name="agreeToMarketing"
                   checked={formData.agreeToMarketing}
                   onChange={handleInputChange}
-                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-1"
+                  className="w-5 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-1"
                 />
                 <span className="ml-3 text-sm text-slate-600">
                   I'd like to receive investment insights and market updates via email

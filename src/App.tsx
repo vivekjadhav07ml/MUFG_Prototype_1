@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Header } from './components/Header';
-import { ChatInterface } from './components/ChatInterface';
+// import { ChatInterface } from './components/ChatInterface';
 import { Dashboard } from './components/Dashboard';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { EducationCenter } from './components/EducationCenter';
@@ -11,7 +11,8 @@ import { ForgotPasswordPage } from './components/Auth/ForgotPasswordPage';
 import { MarketTrends } from './components/MarketTrends';
 import { InvestmentManager } from './components/InvestmentManager';
 import { ForecastingTool } from './components/ForecastingTool';
-import { AIRecommendations } from './components/AIRecommendations';
+// import { AIRecommendations } from './components/AIRecommendations';
+import { CombinedAI } from './components/CombinedAI';
 import ProfilePage from './components/ProfilePage';
 
 import { useAuth } from './hooks/useAuth';
@@ -44,7 +45,7 @@ export type UserProfile = {
 
 
 
-type View = 'landing' | 'onboarding' | 'dashboard' | 'chat' | 'education' | 'login' | 'signup' | 'forgot' | 'profile' | 'market' | 'investments' | 'forecasting' | 'ai-recommendations';
+type View = 'landing' | 'onboarding' | 'dashboard' | 'combined-ai' | 'education' | 'login' | 'signup' | 'forgot' | 'profile' | 'market' | 'investments' | 'forecasting';
 
 
 function App() {
@@ -138,8 +139,8 @@ function App() {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard userProfile={userProfile} />;
-      case 'chat':
-        return <ChatInterface userProfile={userProfile} />;
+      case 'combined-ai':
+        return <CombinedAI userProfile={userProfile} />;
       case 'education':
         return <EducationCenter />;
       case 'market':
@@ -148,8 +149,8 @@ function App() {
         return <InvestmentManager userProfile={userProfile} />;
       case 'forecasting':
         return <ForecastingTool userProfile={userProfile} />;
-      case 'ai-recommendations':
-        return <AIRecommendations userProfile={userProfile} />;
+  // case 'ai-recommendations':
+  //   return <AIRecommendations userProfile={userProfile} />;
       case 'profile':
         return <ProfilePage userProfile={userProfile} />;
       default:

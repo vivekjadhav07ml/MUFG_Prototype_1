@@ -1,37 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { Bot, TrendingUp, AlertCircle, Target, Star, RefreshCw, MessageCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Bot, User, TrendingUp, DollarSign, Target, AlertCircle, Star, RefreshCw, MessageCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { geminiService, InvestmentRecommendation, MarketInsight } from '../services/geminiService';
 import { marketDataService } from '../services/marketData';
 import { UserProfile } from '../App';
 
-interface AIRecommendationsProps {
+interface CombinedAIProps {
   userProfile: UserProfile;
 }
 
-export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfile }) => {
+interface Message {
+  id: string;
+  text: string;
+  sender: 'user' | 'ai';
+  timestamp: Date;
+  suggestions?: string[];
+}
+
+export const CombinedAI: React.FC<CombinedAIProps> = ({ userProfile }) => {
+  // Chat State
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      text: `Hello ${userProfile?.name}! I'm your AI Investment Advisor. I can help you optimize your superannuation strategy, analyze market trends, and answer any investment questions you have. What would you like to know?`,
+      sender: 'ai',
+      timestamp: new Date(),
+      suggestions: [
+        'How can I maximize my retirement savings?',
+        'Should I increase my risk tolerance?',
+        'What are the best performing investment options?',
+        'How much should I contribute monthly?'
+      ]
+    }
+  ]);
+  const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Recommendations/Insights State
   const [recommendations, setRecommendations] = useState<InvestmentRecommendation[]>([]);
   const [insights, setInsights] = useState<MarketInsight[]>([]);
   const [loading, setLoading] = useState(true);
-  const [chatQuestion, setChatQuestion] = useState('');
-  const [chatResponse, setChatResponse] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'recommendations' | 'insights' | 'chat'>('recommendations');
 
-  useEffect(() => {
-    loadAIData();
-  }, [userProfile]);
+  // Chat scroll
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+  useEffect(() => { scrollToBottom(); }, [messages]);
 
+  // Load AI Data
+  useEffect(() => { loadAIData(); }, [userProfile]);
   const loadAIData = async () => {
     setLoading(true);
     try {
-      // Get current market data
       const marketData = await Promise.all([
         marketDataService.getStockQuote('VAS.AX'),
         marketDataService.getStockQuote('VGS.AX'),
         marketDataService.getStockQuote('VAF.AX'),
         marketDataService.getStockQuote('VGE.AX'),
       ]);
-
       const validMarketData = marketData.filter(Boolean).length > 0 
         ? marketData.filter(Boolean) 
         : [
@@ -40,13 +67,10 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfil
             marketDataService.getMockStockData('VAF.AX'),
             marketDataService.getMockStockData('VGE.AX'),
           ];
-
-      // Get AI recommendations and insights
       const [aiRecommendations, aiInsights] = await Promise.all([
         geminiService.getInvestmentRecommendations(userProfile, validMarketData),
         geminiService.getMarketInsights(validMarketData, userProfile)
       ]);
-
       setRecommendations(aiRecommendations);
       setInsights(aiInsights);
     } catch (error) {
@@ -56,22 +80,57 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfil
     }
   };
 
-  const handleChatSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatQuestion.trim()) return;
-
-    setChatLoading(true);
-    try {
-      const response = await geminiService.answerFinancialQuestion(chatQuestion, userProfile);
-      setChatResponse(response);
-    } catch (error) {
-      console.error('Error getting AI response:', error);
-      setChatResponse('I apologize, but I\'m currently unable to process your question. Please try again later or consult with a licensed financial advisor.');
-    } finally {
-      setChatLoading(false);
+  // Chat logic
+  const simulateAIResponse = (userMessage: string): string => {
+    const message = userMessage.toLowerCase();
+    if (message.includes('maximize') || message.includes('increase') || message.includes('savings')) {
+      return `Based on your ${userProfile?.riskTolerance} risk profile and ${userProfile?.retirementAge! - userProfile?.age!} years to retirement, I recommend:\n\n1. **Increase Contributions**: Consider boosting your monthly contribution by $200-300. This could add $45,000+ to your retirement balance.\n\n2. **Salary Sacrifice**: Use pre-tax contributions to maximize tax benefits - potentially saving you $1,200 annually.\n\n3. **Asset Allocation**: With your timeframe, consider increasing growth assets to 70-75% for higher long-term returns.\n\n4. **Regular Reviews**: Market conditions change - I recommend quarterly portfolio reviews to stay optimized.\n\nWould you like me to calculate specific projections for any of these strategies?`;
     }
+    if (message.includes('risk') || message.includes('tolerance')) {
+      return `Your current ${userProfile?.riskTolerance} risk profile suits your ${userProfile?.retirementAge! - userProfile?.age!}-year investment horizon well. Here's what this means:\n\n**Current Allocation Benefits:**\n- Balanced growth potential with managed volatility\n- Diversification across asset classes\n- Appropriate for medium to long-term goals\n\n**Consider This:**\nGiven your age (${userProfile?.age}) and time to retirement, you might benefit from a slightly more growth-oriented approach. This could potentially increase your retirement balance by 15-20%.\n\n**Risk vs. Reward:**\n- Higher risk = potential for $75,000+ more at retirement\n- Lower risk = more predictable but potentially smaller returns\n\nWould you like me to model different risk scenarios for your specific situation?`;
+    }
+    if (message.includes('contribute') || message.includes('monthly') || message.includes('much')) {
+      const current = userProfile?.monthlyContribution || 500;
+      const recommended = Math.round(current * 1.4);
+      const difference = recommended - current;
+      return `Based on your goals and current balance of $${userProfile?.currentSuper.toLocaleString()}, here's my analysis:\n\n**Current Contribution:** $${current}/month\n**Recommended:** $${recommended}/month (+$${difference})\n\n**Impact of Increase:**\n- Additional retirement savings: ~$${Math.round(difference * 12 * (userProfile?.retirementAge! - userProfile?.age!) * 1.07).toLocaleString()}\n- Tax benefits: Save ~$${Math.round(difference * 12 * 0.15)}/year\n- Retirement income boost: +$${Math.round(difference * 12 * (userProfile?.retirementAge! - userProfile?.age!) * 1.07 * 0.04 / 12)}/month\n\n**Ways to Increase:**\n1. Salary sacrifice (pre-tax)\n2. After-tax contributions\n3. Government co-contributions (if eligible)\n\nShould I help you calculate the optimal contribution strategy?`;
+    }
+    return `I understand you're asking about ${message}. Based on your profile:\n\n- Current Balance: $${userProfile?.currentSuper.toLocaleString()}\n- Risk Profile: ${userProfile?.riskTolerance}\n- Years to Retirement: ${userProfile?.retirementAge! - userProfile?.age!}\n\nLet me provide personalized advice. The superannuation landscape offers many opportunities for optimization, from asset allocation adjustments to contribution strategies and tax-effective structures.\n\nCould you be more specific about what aspect of your investment strategy you'd like to focus on? I can provide detailed analysis on portfolio performance, risk management, or retirement income projections.`;
   };
 
+  const handleSendMessage = async (text: string) => {
+    if (!text.trim()) return;
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text,
+      sender: 'user',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInputText('');
+    setIsTyping(true);
+    setTimeout(() => {
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: simulateAIResponse(text),
+        sender: 'ai',
+        timestamp: new Date(),
+        suggestions: [
+          'Tell me more about this strategy',
+          'Show me the calculations',
+          'What are the risks?',
+          'Compare with other options'
+        ]
+      };
+      setMessages(prev => [...prev, aiResponse]);
+      setIsTyping(false);
+    }, 1500);
+  };
+  const handleSuggestionClick = (suggestion: string) => {
+    handleSendMessage(suggestion);
+  };
+
+  // UI helpers
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'LOW': return 'bg-green-100 text-green-700';
@@ -80,7 +139,6 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfil
       default: return 'bg-gray-100 text-gray-700';
     }
   };
-
   const getRecommendationColor = (rec: string) => {
     switch (rec) {
       case 'BUY': return 'bg-green-100 text-green-700 border-green-200';
@@ -90,6 +148,15 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfil
     }
   };
 
+  // Quick Actions
+  const quickActions = [
+    { icon: TrendingUp, text: 'Portfolio Performance', color: 'bg-blue-500' },
+    { icon: DollarSign, text: 'Increase Contributions', color: 'bg-green-500' },
+    { icon: Target, text: 'Retirement Goals', color: 'bg-purple-500' },
+    { icon: AlertCircle, text: 'Risk Assessment', color: 'bg-orange-500' },
+  ];
+
+  // Renderers
   const renderRecommendations = () => (
     <div className="space-y-6">
       {loading ? (
@@ -116,16 +183,13 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfil
                     </div>
                   </div>
                 </div>
-
                 <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 mb-4 ${getRecommendationColor(rec.recommendation)}`}>
                   {rec.recommendation === 'BUY' && <TrendingUp className="w-4 h-4 mr-1" />}
                   {rec.recommendation === 'HOLD' && <Target className="w-4 h-4 mr-1" />}
                   {rec.recommendation === 'SELL' && <AlertCircle className="w-4 h-4 mr-1" />}
                   {rec.recommendation}
                 </div>
-
                 <p className="text-slate-700 text-sm mb-4">{rec.reasoning}</p>
-
                 <div className="space-y-2 text-sm">
                   {rec.targetPrice && (
                     <div className="flex justify-between">
@@ -138,7 +202,6 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfil
                     <span className="font-medium text-slate-900">{rec.timeHorizon}</span>
                   </div>
                 </div>
-
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200">
                   <div className="flex space-x-2">
                     <button className="p-1 text-green-600 hover:text-green-700">
@@ -155,7 +218,6 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfil
               </div>
             ))}
           </div>
-
           {recommendations.length === 0 && (
             <div className="text-center py-12">
               <Bot className="w-12 h-12 text-slate-400 mx-auto mb-4" />
@@ -216,7 +278,6 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfil
               </div>
             ))}
           </div>
-
           {insights.length === 0 && (
             <div className="text-center py-12">
               <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-4" />
@@ -231,90 +292,119 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfil
 
   const renderChat = () => (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Ask AI Financial Advisor</h3>
-        <form onSubmit={handleChatSubmit} className="space-y-4">
-          <div>
-            <textarea
-              value={chatQuestion}
-              onChange={(e) => setChatQuestion(e.target.value)}
-              placeholder="Ask me anything about investments, superannuation, or financial planning..."
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              rows={3}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={chatLoading || !chatQuestion.trim()}
-            className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {chatLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Thinking...</span>
-              </>
-            ) : (
-              <>
-                <MessageCircle className="w-4 h-4" />
-                <span>Ask AI</span>
-              </>
-            )}
-          </button>
-        </form>
-
-        {chatResponse && (
-          <div className="mt-6 p-4 bg-slate-50 rounded-lg">
-            <div className="flex items-start space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Bot className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-medium text-slate-900 mb-2">AI Response</h4>
-                <div className="text-slate-700 whitespace-pre-wrap">{chatResponse}</div>
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200">
-                  <div className="flex space-x-2">
-                    <button className="p-1 text-green-600 hover:text-green-700">
-                      <ThumbsUp className="w-4 h-4" />
-                    </button>
-                    <button className="p-1 text-red-600 hover:text-red-700">
-                      <ThumbsDown className="w-4 h-4" />
-                    </button>
+      {/* Quick Actions */}
+      {messages.length <= 1 && (
+        <div className="p-6 border-b border-slate-200">
+          <h3 className="text-sm font-medium text-slate-700 mb-3">Quick Actions</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {quickActions.map((action, index) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleSendMessage(action.text)}
+                  className="flex flex-col items-center p-3 rounded-lg border border-slate-200 hover:shadow-md transition-all duration-200"
+                >
+                  <div className={`p-2 rounded-lg ${action.color} mb-2`}>
+                    <Icon className="w-4 h-4 text-white" />
                   </div>
-                  <p className="text-xs text-slate-500">
-                    This is AI-generated advice. Please consult a licensed financial advisor for personalized guidance.
-                  </p>
+                  <span className="text-xs text-slate-700 text-center">{action.text}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {/* Chat Messages */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6" style={{ maxHeight: 400 }}>
+        {messages.map((message) => (
+          <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`flex max-w-3xl ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div className={`flex-shrink-0 ${message.sender === 'user' ? 'ml-3' : 'mr-3'}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  message.sender === 'user' 
+                    ? 'bg-blue-600' 
+                    : 'bg-gradient-to-br from-green-500 to-blue-600'
+                }`}>
+                  {message.sender === 'user' ? (
+                    <User className="w-5 h-5 text-white" />
+                  ) : (
+                    <Bot className="w-5 h-5 text-white" />
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className={`p-4 rounded-lg ${
+                  message.sender === 'user'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-900'
+                }`}>
+                  <p className="whitespace-pre-line">{message.text}</p>
+                </div>
+                {message.suggestions && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {message.suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="px-3 py-1 text-xs bg-white border border-slate-300 text-slate-700 rounded-full hover:bg-slate-50 transition-colors duration-200"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+        {isTyping && (
+          <div className="flex justify-start">
+            <div className="flex">
+              <div className="mr-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-blue-600 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-white" />
+                </div>
+              </div>
+              <div className="bg-slate-100 p-4 rounded-lg">
+                <div className="flex space-x-2">
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
-
-      {/* Sample Questions */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Sample Questions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {[
-            "Should I increase my superannuation contributions?",
-            "What's the best asset allocation for my age?",
-            "How can I reduce investment fees?",
-            "When should I rebalance my portfolio?",
-            "What are the tax implications of salary sacrificing?",
-            "How much should I have saved by retirement?"
-          ].map((question, index) => (
-            <button
-              key={index}
-              onClick={() => setChatQuestion(question)}
-              className="p-3 text-left text-sm bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
-            >
-              {question}
-            </button>
-          ))}
+      {/* Chat Input */}
+      <div className="border-t border-slate-200 p-6">
+        <div className="flex space-x-4">
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(inputText)}
+            placeholder="Ask me about your superannuation strategy..."
+            className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <button
+            onClick={() => handleSendMessage(inputText)}
+            disabled={!inputText.trim() || isTyping}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-lg hover:from-blue-700 hover:to-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Send className="w-5 h-5" />
+          </button>
         </div>
+        <p className="text-xs text-slate-500 mt-2 text-center">
+          AI responses are educational and not personalized financial advice. Consult a licensed advisor for specific guidance.
+        </p>
       </div>
     </div>
   );
 
+  // Main Render
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
@@ -335,7 +425,6 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfil
             </button>
           </div>
         </div>
-
         {/* Navigation Tabs */}
         <div className="bg-white rounded-xl shadow-lg mb-8">
           <div className="border-b border-slate-200">
@@ -363,7 +452,6 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ userProfil
               })}
             </nav>
           </div>
-
           <div className="p-6">
             {selectedTab === 'recommendations' && renderRecommendations()}
             {selectedTab === 'insights' && renderInsights()}
