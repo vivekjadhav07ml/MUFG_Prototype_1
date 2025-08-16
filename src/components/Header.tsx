@@ -4,7 +4,7 @@ import { UserProfile } from '../App';
 
 interface HeaderProps {
   currentView: string;
-  setCurrentView: (view: 'onboarding' | 'dashboard' | 'combined-ai' | 'education' | 'profile' | 'market' | 'investments' | 'forecasting') => void;
+  setCurrentView: (view: 'onboarding' | 'dashboard' | 'combined-ai' | 'finguide-chat' | 'education' | 'profile' | 'market' | 'investments' | 'forecasting') => void;
   userProfile: UserProfile | null;
 }
 
@@ -12,6 +12,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, use
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'combined-ai', label: 'AI Advisor', icon: Bot },
+    { id: 'finguide-chat', label: 'FinGuide AI', icon: MessageCircle },
     { id: 'investments', label: 'Portfolio', icon: Briefcase },
     { id: 'market', label: 'Market', icon: LineChart },    
     { id: 'forecasting', label: 'Forecasting', icon: Calculator },    
@@ -40,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, setCurrentView, use
             <nav className="hidden lg:flex items-center gap-2 xl:gap-4">
               {navItems.map((item, idx) => {
                 // Show fewer items on smaller screens
-                if (window.innerWidth < 1280 && idx > 3) return null;
+                if (window.innerWidth < 1280 && idx > 4) return null;
                 const Icon = item.icon;
                 const isActive = currentView === item.id;
                 return (

@@ -5,6 +5,7 @@ import { Dashboard } from './components/Dashboard';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { EducationCenter } from './components/EducationCenter';
 import { LandingPage } from './components/LandingPage';
+import { FinGuideChat } from './components/FinGuideChat';
 import { LoginPage } from './components/Auth/LoginPage';
 import { SignupPage } from './components/Auth/SignupPage';
 import { ForgotPasswordPage } from './components/Auth/ForgotPasswordPage';
@@ -45,7 +46,7 @@ export type UserProfile = {
 
 
 
-type View = 'landing' | 'onboarding' | 'dashboard' | 'combined-ai' | 'education' | 'login' | 'signup' | 'forgot' | 'profile' | 'market' | 'investments' | 'forecasting';
+type View = 'landing' | 'onboarding' | 'dashboard' | 'combined-ai' | 'finguide-chat' | 'education' | 'login' | 'signup' | 'forgot' | 'profile' | 'market' | 'investments' | 'forecasting';
 
 
 function App() {
@@ -141,6 +142,8 @@ function App() {
         return <Dashboard userProfile={userProfile} />;
       case 'combined-ai':
         return <CombinedAI userProfile={userProfile} />;
+      case 'finguide-chat':
+        return <FinGuideChat userProfile={userProfile} />;
       case 'education':
         return <EducationCenter />;
       case 'market':
@@ -162,7 +165,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <Header 
         currentView={currentView as Exclude<View, 'landing' | 'login' | 'signup' | 'forgot'>}
-        setCurrentView={setCurrentView as any}
+        setCurrentView={setCurrentView as (view: Exclude<View, 'landing' | 'login' | 'signup' | 'forgot'>) => void}
         userProfile={userProfile}
       />
       <main className="pt-16">
